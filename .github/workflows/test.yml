@@ -43,18 +43,18 @@ jobs:
             exit 1
           fi
 
-          # Sanitize MAINNET_RPC_URL (remove accidental variable prefix, quotes, whitespace)
-          CLEAN_RPC=$(echo "$MAINNET_RPC_URL" | sed -e 's/^MAINNET_RPC_URL=//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
+          # Strip carriage returns (\r), newlines (\n), whitespace, quotes, and variable name prefix
+          CLEAN_RPC=$(printf '%s' "$MAINNET_RPC_URL" | tr -d '\r\n\t "' | sed -e 's/^MAINNET_RPC_URL=//' -e "s/^'//" -e "s/'$//")
 
           if [[ "$CLEAN_RPC" != http* ]]; then
-            echo "::error::MAINNET_RPC_URL must be a full URL starting with https:// (e.g. https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY). It looks like only an API key or an invalid string was entered."
+            echo "::error::MAINNET_RPC_URL must start with https:// (e.g. https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY). It looks like only an API key or invalid string was entered."
             exit 1
           fi
 
           echo "MAINNET_RPC_URL=$CLEAN_RPC" >> $GITHUB_ENV
 
-          # Sanitize FORK_BLOCK
-          CLEAN_BLOCK=$(echo "$FORK_BLOCK" | sed -e 's/^FORK_BLOCK=//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
+          # Strip carriage returns, whitespace, and quotes from FORK_BLOCK
+          CLEAN_BLOCK=$(printf '%s' "$FORK_BLOCK" | tr -d '\r\n\t "' | sed -e 's/^FORK_BLOCK=//' -e "s/^'//" -e "s/'$//")
           if [ -z "$CLEAN_BLOCK" ]; then
             CLEAN_BLOCK="26131429"
           fi
@@ -63,7 +63,7 @@ jobs:
           # Test RPC connection
           RPC_RESP=$(curl -sS --max-time 15 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$CLEAN_RPC" 2>&1 || true)
           if [[ "$RPC_RESP" != *"result"* ]]; then
-            echo "::error::RPC test failed. Expected a JSON-RPC response containing 'result', but got: $RPC_RESP"
+            echo "::error::RPC test failed. Response: $RPC_RESP"
             exit 1
           fi
           echo "RPC connectivity verified successfully."
