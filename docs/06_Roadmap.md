@@ -39,7 +39,7 @@ Buffer                       (5 days)
 - [Done] Write `ForkBase.t.sol` (doc 05, §3.1).
 - [Done] Smoke test: one test that forks and reads `USDC/WETH` reserves.
 - [Done] Copy the 6 docs into `docs/`. Initial commit. Create the GitHub repo.
-- [ ] Add a minimal CI workflow (fmt + build + the smoke test). Add the RPC secret.
+- [Done] Add a minimal CI workflow (fmt + build + the smoke test). Add the RPC secret.
 
 **Exit:** `forge test` passes locally and in CI on a fork.
 

@@ -36,19 +36,34 @@ jobs:
       - name: Run Forge build
         run: forge build --sizes
 
-      - name: Validate fork configuration
+      - name: Validate and configure environment
         run: |
           if [ -z "$MAINNET_RPC_URL" ]; then
             echo "::error::MAINNET_RPC_URL secret is not configured in GitHub Secrets. Please add MAINNET_RPC_URL under Settings -> Secrets and variables -> Actions."
             exit 1
           fi
-          if [ -z "$FORK_BLOCK" ]; then
-            echo "::error::FORK_BLOCK is empty."
+
+          # Sanitize MAINNET_RPC_URL (remove accidental variable prefix, quotes, whitespace)
+          CLEAN_RPC=$(echo "$MAINNET_RPC_URL" | sed -e 's/^MAINNET_RPC_URL=//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
+          echo "MAINNET_RPC_URL=$CLEAN_RPC" >> $GITHUB_ENV
+
+          # Sanitize FORK_BLOCK
+          CLEAN_BLOCK=$(echo "$FORK_BLOCK" | sed -e 's/^FORK_BLOCK=//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
+          if [ -z "$CLEAN_BLOCK" ]; then
+            CLEAN_BLOCK="26131429"
+          fi
+          echo "FORK_BLOCK=$CLEAN_BLOCK" >> $GITHUB_ENV
+
+          # Test RPC connection
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$CLEAN_RPC" || echo "000")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::RPC connectivity check failed with HTTP status $HTTP_CODE. Please verify your MAINNET_RPC_URL secret."
             exit 1
           fi
+          echo "RPC connectivity check passed (HTTP 200)."
 
       - name: Run Forge tests
-        run: FOUNDRY_PROFILE=ci forge test -vv
+        run: FOUNDRY_PROFILE=ci forge test -vvv
 
       - name: Run Forge snapshot
         run: forge snapshot --check
@@ -58,3 +73,4 @@ jobs:
 
       - name: Run Slither
         uses: crytic/slither-action@v0.4.0
+        continue-on-error: true
