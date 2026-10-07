@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
+    env:
+      MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+      FORK_BLOCK: ${{ vars.FORK_BLOCK }}
+
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -32,4 +37,13 @@ jobs:
         run: forge build --sizes
 
       - name: Run Forge tests
-        run: forge test -vvv
+        run: FOUNDRY_PROFILE=ci forge test -vv
+
+      - name: Run Forge snapshot
+        run: forge snapshot --check
+
+      - name: Run Forge coverage
+        run: forge coverage --report summary --no-match-coverage "(test|script|mocks)"
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.4.0
