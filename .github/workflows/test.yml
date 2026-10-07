@@ -45,6 +45,12 @@ jobs:
 
           # Sanitize MAINNET_RPC_URL (remove accidental variable prefix, quotes, whitespace)
           CLEAN_RPC=$(echo "$MAINNET_RPC_URL" | sed -e 's/^MAINNET_RPC_URL=//' -e 's/^[ \t]*//' -e 's/[ \t]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
+
+          if [[ "$CLEAN_RPC" != http* ]]; then
+            echo "::error::MAINNET_RPC_URL must be a full URL starting with https:// (e.g. https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY). It looks like only an API key or an invalid string was entered."
+            exit 1
+          fi
+
           echo "MAINNET_RPC_URL=$CLEAN_RPC" >> $GITHUB_ENV
 
           # Sanitize FORK_BLOCK
@@ -55,12 +61,12 @@ jobs:
           echo "FORK_BLOCK=$CLEAN_BLOCK" >> $GITHUB_ENV
 
           # Test RPC connection
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$CLEAN_RPC" || echo "000")
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::RPC connectivity check failed with HTTP status $HTTP_CODE. Please verify your MAINNET_RPC_URL secret."
+          RPC_RESP=$(curl -sS --max-time 15 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$CLEAN_RPC" 2>&1 || true)
+          if [[ "$RPC_RESP" != *"result"* ]]; then
+            echo "::error::RPC test failed. Expected a JSON-RPC response containing 'result', but got: $RPC_RESP"
             exit 1
           fi
-          echo "RPC connectivity check passed (HTTP 200)."
+          echo "RPC connectivity verified successfully."
 
       - name: Run Forge tests
         run: FOUNDRY_PROFILE=ci forge test -vvv
