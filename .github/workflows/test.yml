@@ -16,7 +16,7 @@ jobs:
 
     env:
       MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
-      FORK_BLOCK: ${{ vars.FORK_BLOCK }}
+      FORK_BLOCK: ${{ vars.FORK_BLOCK || '26131429' }}
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -35,6 +35,17 @@ jobs:
 
       - name: Run Forge build
         run: forge build --sizes
+
+      - name: Validate fork configuration
+        run: |
+          if [ -z "$MAINNET_RPC_URL" ]; then
+            echo "::error::MAINNET_RPC_URL secret is not configured in GitHub Secrets. Please add MAINNET_RPC_URL under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          if [ -z "$FORK_BLOCK" ]; then
+            echo "::error::FORK_BLOCK is empty."
+            exit 1
+          fi
 
       - name: Run Forge tests
         run: FOUNDRY_PROFILE=ci forge test -vv
