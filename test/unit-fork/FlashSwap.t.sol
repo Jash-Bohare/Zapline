@@ -199,4 +199,23 @@ contract FlashSwapTest is ForkBase {
         assertEq(usdc.balanceOf(address(flashSwap)), 0, "Vault holds 0 USDC");
         assertEq(weth.balanceOf(address(flashSwap)), 0, "Vault holds 0 WETH");
     }
+
+    /// @notice FS-T11: executeArbSameToken reverts Unprofitable without external surplus
+    function test_FST11_ExecuteArbSameTokenRevertsUnprofitable() public {
+        vm.expectRevert();
+        flashSwap.executeArbSameToken(usdcWethPair, address(weth), 1 ether, 0, alice);
+    }
+
+    /// @notice FS-T12: executeArbSameToken succeeds and distributes profit when funded with arbitrage surplus
+    function test_FST12_ExecuteArbSameTokenSuccessWithSurplus() public {
+        // Pre-fund flashSwap with surplus to simulate profitable return in borrowed token
+        uint256 fee = (uint256(1 ether) * 1000) / 997 + 1 - 1 ether + 0.05 ether;
+        deal(address(weth), address(flashSwap), fee);
+
+        uint256 aliceBefore = weth.balanceOf(alice);
+        uint256 profit = flashSwap.executeArbSameToken(usdcWethPair, address(weth), 1 ether, 0, alice);
+        assertGt(profit, 0, "Arbitrage should yield profit");
+        assertEq(weth.balanceOf(alice) - aliceBefore, profit, "Alice receives profit");
+        assertEq(weth.balanceOf(address(flashSwap)), 0, "FlashSwap holds 0 residual tokens");
+    }
 }

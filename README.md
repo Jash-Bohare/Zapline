@@ -212,13 +212,27 @@ forge coverage --report summary --no-match-coverage "(test|script|mocks)"
 | **Single-Sided Zap** | `Zap.t.sol` | 17 | PASS |
 | **Oracle** | `TwapOracle.t.sol` | 10 | PASS |
 | **LP Vault** | `LPVault.t.sol` | 13 | PASS |
-| **Flash Arbitrage** | `FlashSwap.t.sol` | 11 | PASS |
+| **Flash Arbitrage** | `FlashSwap.t.sol` | 13 | PASS |
+| **Comprehensive Suite** | `ComprehensiveCoverage.t.sol` | 19 | PASS |
 | **Attack 01** | `01_SpotOracleManipulation.t.sol` | 2 | PASS |
 | **Attack 02** | `02_SandwichNoSlippage.t.sol` | 2 | PASS |
 | **Attack 03** | `03_UnsafeFlashCallback.t.sol` | 4 | PASS |
 | **Attack 04** | `04_VaultInflation.t.sol` | 2 | PASS |
 | **Invariants** | `VaultInvariants.t.sol` | 4 | PASS |
-| **Total** | **11 Suites** | **88 Tests** | **100% PASS** |
+| **Total** | **12 Suites** | **109 Tests** | **100% PASS** |
+
+### Code Coverage Metrics
+
+| File | % Lines | % Statements | % Branches | % Funcs |
+| :--- | :---: | :---: | :---: | :---: |
+| `src/libraries/V2Library.sol` | **100.00%** | **100.00%** | **100.00%** | **100.00%** |
+| `src/oracle/TwapOracle.sol` | **100.00%** | **97.78%** | **87.50%** | **100.00%** |
+| `src/SwapExecutor.sol` | **100.00%** | **88.89%** | **42.31%** | **100.00%** |
+| `src/Zap.sol` | **99.18%** | **94.44%** | **56.00%** | **100.00%** |
+| `src/FlashSwap.sol` | **96.15%** | **92.48%** | **41.18%** | **100.00%** |
+| `src/LPVault.sol` | **94.52%** | **91.92%** | **41.67%** | **91.67%** |
+| `src/libraries/ZapMath.sol` | **92.00%** | **95.24%** | **71.43%** | **100.00%** |
+| **Total (All Contracts & Libraries)** | **98.00%** | **93.71%** | **58.41%** | **98.39%** |
 
 ---
 
