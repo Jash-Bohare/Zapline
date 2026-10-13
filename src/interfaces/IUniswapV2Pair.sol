@@ -16,6 +16,10 @@ interface IUniswapV2Pair {
 
     function swap(uint256 a0Out, uint256 a1Out, address to, bytes calldata data) external;
 
+    function sync() external;
+
+    function skim(address to) external;
+
     function balanceOf(address account) external view returns (uint256);
 
     function approve(address spender, uint256 amount) external returns (bool);
