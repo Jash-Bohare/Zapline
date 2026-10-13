@@ -16,10 +16,10 @@ abstract contract ForkBase is Test {
     IERC20 dai = IERC20(Constants.DAI);
     IERC20 usdt = IERC20(Constants.USDT);
 
-    address alice = makeAddr("alice");
-    address bob = makeAddr("bob");
-    address attacker = makeAddr("attacker");
-    address owner = makeAddr("owner");
+    address alice = makeAddr("zapline.alice");
+    address bob = makeAddr("zapline.bob");
+    address attacker = makeAddr("zapline.attacker");
+    address owner = makeAddr("zapline.owner");
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), vm.envUint("FORK_BLOCK"));
