@@ -58,6 +58,7 @@ contract FlashSwap is IUniswapV2Callee, ReentrancyGuard {
         if (borrowPair == address(0) || profitRecipient == address(0) || profitRecipient == address(this)) {
             revert InvalidBorrow();
         }
+        if (borrowPair.code.length == 0) revert PairNotFound();
 
         address repayToken;
         bytes memory data;
@@ -112,6 +113,7 @@ contract FlashSwap is IUniswapV2Callee, ReentrancyGuard {
         if (borrowPair == address(0) || profitRecipient == address(0) || profitRecipient == address(this)) {
             revert InvalidBorrow();
         }
+        if (borrowPair.code.length == 0) revert PairNotFound();
 
         bytes memory data;
         {
