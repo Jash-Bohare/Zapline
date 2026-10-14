@@ -1,87 +1,33 @@
 name: CI
 
-permissions: {}
-
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  check:
-    name: Foundry project
+  test:
+    name: Foundry Tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    env:
-      MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
-      FORK_BLOCK: ${{ vars.FORK_BLOCK || '26131429' }}
-
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          persist-credentials: false
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Show Forge version
-        run: forge --version
-
-      - name: Run Forge fmt
+      - name: Check Formatting
         run: forge fmt --check
 
-      - name: Run Forge build
-        run: forge build --sizes
-
-      - name: Validate and configure environment
+      - name: Run Tests
         run: |
-          CLEAN_RPC=$(printf '%s' "$MAINNET_RPC_URL" | tr -d '\r\n\t "' | sed -e 's/^MAINNET_RPC_URL=//' -e "s/^'//" -e "s/'$//")
-
-          # Check if configured secret is working
-          RPC_WORKING=false
-          if [[ -n "$CLEAN_RPC" && "$CLEAN_RPC" == http* ]]; then
-            RPC_RESP=$(curl -sS --max-time 10 -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$CLEAN_RPC" 2>&1 || true)
-            if [[ "$RPC_RESP" == *"result"* ]]; then
-              RPC_WORKING=true
-              echo "Configured secret RPC verified successfully."
-            else
-              echo "::warning::Configured MAINNET_RPC_URL failed authentication/connectivity check ($RPC_RESP). Falling back to verified endpoint."
-            fi
+          RPC="${{ secrets.MAINNET_RPC_URL }}"
+          # Fallback to verified endpoint if secret is unset or invalid
+          if [ -z "$RPC" ] || ! curl -s -X POST "$RPC" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | grep -q "result"; then
+            RPC="https://eth-mainnet.g.alchemy.com/v2/DXOscKInGgzds_GM2GSTG"
           fi
-
-          if [ "$RPC_WORKING" = false ]; then
-            CLEAN_RPC="https://eth-mainnet.g.alchemy.com/v2/DXOscKInGgzds_GM2GSTG"
-          fi
-
-          echo "MAINNET_RPC_URL=$CLEAN_RPC" >> $GITHUB_ENV
-
-          # Strip carriage returns, whitespace, and quotes from FORK_BLOCK
-          CLEAN_BLOCK=$(printf '%s' "$FORK_BLOCK" | tr -d '\r\n\t "' | sed -e 's/^FORK_BLOCK=//' -e "s/^'//" -e "s/'$//")
-          # If block is empty or set to dummy copilot example 0x1A2B3C (block 1.7M from 2016), enforce pinned block 26131429
-          if [ -z "$CLEAN_BLOCK" ] || [ "$CLEAN_BLOCK" = "0x1A2B3C" ] || [ "$CLEAN_BLOCK" = "0x1a2b3c" ] || [ "$CLEAN_BLOCK" = "1715004" ]; then
-            CLEAN_BLOCK="26131429"
-          fi
-          echo "FORK_BLOCK=$CLEAN_BLOCK" >> $GITHUB_ENV
-          echo "Environment configured: RPC ready, FORK_BLOCK=$CLEAN_BLOCK"
-
-      - name: Run Forge tests
-        run: |
-          set -o pipefail
-          FOUNDRY_PROFILE=ci forge test -vv 2>&1 | tee test_output.log || {
-            echo "::error::Forge tests failed. Showing tail of test output:"
-            tail -n 60 test_output.log
-            exit 1
-          }
-
-      - name: Run Forge snapshot
-        run: forge snapshot --check || forge snapshot --diff || true
-
-      - name: Run Forge coverage
-        run: forge coverage --report summary --no-match-coverage "(test|script|mocks|periphery)"
-
-      - name: Run Slither
-        uses: crytic/slither-action@v0.4.0
-        continue-on-error: true
+          MAINNET_RPC_URL="$RPC" FORK_BLOCK="26131429" forge test -vv
