@@ -252,6 +252,30 @@ forge script script/Deploy.s.sol --rpc-url $MAINNET_RPC_URL --broadcast --verify
 
 ---
 
+---
+
+## Live Deployments (Base Sepolia Testnet - Chain ID: 84532)
+
+All Zapline contracts are deployed live on **Base Sepolia** and verified with **100% Exact Match** on Sourcify and BaseScan:
+
+| Contract | Address | BaseScan Link | Verification |
+| :--- | :--- | :--- | :---: |
+| **SwapExecutor** | `0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b` | [View on BaseScan](https://sepolia.basescan.org/address/0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b) | Exact Match |
+| **Zap** | `0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19` | [View on BaseScan](https://sepolia.basescan.org/address/0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19) | Exact Match |
+| **TwapOracle** | `0x83Ba06204136b0df38a2906673364600f0B0b7D0` | [View on BaseScan](https://sepolia.basescan.org/address/0x83Ba06204136b0df38a2906673364600f0B0b7D0) | Exact Match |
+| **LPVault** (USDC/WETH) | `0x89EC41722e401cE1dFBE459644f68a3d7180AcA6` | [View on BaseScan](https://sepolia.basescan.org/address/0x89EC41722e401cE1dFBE459644f68a3d7180AcA6) | Exact Match |
+| **FlashSwap** | `0x867741F11BC22dc9d898c1c8998B4D8721384536` | [View on BaseScan](https://sepolia.basescan.org/address/0x867741F11BC22dc9d898c1c8998B4D8721384536) | Exact Match |
+| **UniswapV2Router02** | `0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e` | [View on BaseScan](https://sepolia.basescan.org/address/0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e) | Exact Match |
+| **SushiRouter (Venue B)** | `0x5540ac46a74D2C1c055428cc83E0f4C165b52aad` | [View on BaseScan](https://sepolia.basescan.org/address/0x5540ac46a74D2C1c055428cc83E0f4C165b52aad) | Exact Match |
+
+### Network Parameters & Integrated Pairs
+- **Uniswap V2 Factory**: `0x7Ae58f10f7849cA6F5fB71b7f45CB416c9204b1e`
+- **WETH**: `0x4200000000000000000000000000000000000006`
+- **USDC**: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
+- **USDC / WETH Pair**: `0x0B9Ab53880be6fF805ebF8FBce515E5715ccE1bE`
+
+---
+
 ## Security Verification & Auditing Checklist
 
 - [x] **No Unprotected Callbacks**: Strict verification on `msg.sender == _activePair` and `sender == address(this)`.
