@@ -70,7 +70,7 @@ jobs:
       - name: Run Forge tests
         run: |
           set -o pipefail
-          FOUNDRY_PROFILE=ci forge test -vvv 2>&1 | tee test_output.log || {
+          FOUNDRY_PROFILE=ci forge test -vv 2>&1 | tee test_output.log || {
             echo "::error::Forge tests failed. Showing tail of test output:"
             tail -n 60 test_output.log
             exit 1
