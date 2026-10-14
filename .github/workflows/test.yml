@@ -67,7 +67,13 @@ jobs:
           echo "Environment configured: RPC ready, FORK_BLOCK=$CLEAN_BLOCK"
 
       - name: Run Forge tests
-        run: FOUNDRY_PROFILE=ci forge test -vvv
+        run: |
+          set -o pipefail
+          FOUNDRY_PROFILE=ci forge test -vvv 2>&1 | tee test_output.log || {
+            echo "::error::Forge tests failed. Showing tail of test output:"
+            tail -n 60 test_output.log
+            exit 1
+          }
 
       - name: Run Forge snapshot
         run: forge snapshot --check
