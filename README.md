@@ -22,22 +22,22 @@ flowchart TB
     end
 
     subgraph Core["Zapline Core Integration Suite"]
-        SE["SwapExecutor\n(Multi-Hop & Slippage Router)"]
-        ZP["Zap\n(Single-Sided LP Entry/Exit)"]
-        LV["LPVault\n(ERC-4626 Fair-Reserve Vault)"]
-        FS["FlashSwap\n(Zero-Capital Arbitrage)"]
+        SE["SwapExecutor<br/>(Multi-Hop & Slippage Router)"]
+        ZP["Zap<br/>(Single-Sided LP Entry/Exit)"]
+        LV["LPVault<br/>(ERC-4626 Fair-Reserve Vault)"]
+        FS["FlashSwap<br/>(Zero-Capital Arbitrage)"]
     end
 
     subgraph MathOracle["Math & Security Engine"]
-        ZM["ZapMath\n(512-bit Newton-Raphson Sqrt)"]
-        TO["TwapOracle\n(256-Slot Circular Ring Buffer)"]
-        V2Lib["V2Library\n(Deterministic Pair & Quote Math)"]
+        ZM["ZapMath<br/>(512-bit Newton-Raphson Sqrt)"]
+        TO["TwapOracle<br/>(256-Slot Circular Ring Buffer)"]
+        V2Lib["V2Library<br/>(Deterministic Pair & Quote Math)"]
     end
 
     subgraph Protocol["DEX & Liquidity Venues"]
-        UniPair["Uniswap V2 Pair\n(USDC / WETH Pool)"]
+        UniPair["Uniswap V2 Pair<br/>(USDC / WETH Pool)"]
         UniFactory["Uniswap V2 Factory"]
-        SushiRouter["Venue B: SushiSwap Router\n(Cross-Venue Liquidity)"]
+        SushiRouter["Venue B: SushiSwap Router<br/>(Cross-Venue Liquidity)"]
     end
 
     Trader -->|Exact In/Out Swaps| SE
@@ -63,7 +63,7 @@ flowchart TB
 
 ---
 
-## What We Built
+## Core Protocol Architecture
 
 ### 1. `SwapExecutor.sol` — Hardened Multi-Hop Execution Router
 [`src/SwapExecutor.sol`](src/SwapExecutor.sol) is a gas-efficient router supporting chained token trades across arbitrary paths:
@@ -84,7 +84,7 @@ Normally, Uniswap V2 requires liquidity providers to deposit an exact 50/50 rati
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User
+    actor User as User / EOA
     participant Zap as Zap.sol
     participant ZapMath as ZapMath.sol
     participant Router as UniswapV2Router
@@ -107,7 +107,7 @@ To avoid trial-and-error or brute-force iterations, [`src/libraries/ZapMath.sol`
 
 $$s = \frac{-b + \sqrt{b^2 - 4ac}}{2c}$$
 
-- **512-Bit Safe Arithmetic**: Pool products ($b^2 - 4ac$) easily exceed the standard 256-bit limit for multi-million-dollar pools. `ZapMath` implements a **512-bit safe integer Newton-Raphson square root algorithm** that guarantees zero overflow and exact precision.
+- **512-Bit Safe Arithmetic**: Pool products ($b^2 - 4ac$) easily exceed the standard 256-bit limit for large pools. `ZapMath` implements a **512-bit safe integer Newton-Raphson square root algorithm** that guarantees zero overflow and exact precision.
 - **Full Exit Support (`zapOut`, `zapOutETH`)**: Burns LP tokens, swaps the secondary asset into the desired output token, and delivers 100% of the proceeds in a single currency.
 
 ---
@@ -123,18 +123,17 @@ flowchart LR
     end
 
     subgraph RingBuffer["TwapOracle Circular Storage (256 Slots)"]
-        Obs0["Observation [0]\n(timestamp, price0Cum, price1Cum)"]
-        Obs1["Observation [1]"]
-        ObsN["Observation [N]"]
+        Obs0["Observation 0: timestamp, price0Cum, price1Cum"]
+        ObsN["Observation N: Rolling History"]
     end
 
     subgraph Consumer["DeFi Integrator (LPVault / Lending)"]
         Consult["oracle.consult(pair, tokenIn, amountIn)"]
-        Price["TWAP Output Price\n(Immune to Flash Loans)"]
+        Price["TWAP Output Price (Immune to Flash Loans)"]
     end
 
-    PoolState -->|update()| RingBuffer
-    RingBuffer -->|Sliding Window Delta (dt >= minWindow)| Consult
+    TS -->|"update()"| Obs0
+    ObsN -->|"Sliding Window (dt >= minWindow)"| Consult
     Consult --> Price
 ```
 
@@ -151,7 +150,7 @@ flowchart LR
 [`src/LPVault.sol`](src/LPVault.sol) is an ERC-4626 compliant vault that accepts deposits in either single-sided assets (via `Zap`) or raw Uniswap V2 LP tokens.
 
 #### Fair-Reserve Valuation Formula
-Naive vaults evaluate total assets by multiplying LP tokens by the spot price of pool reserves, making them vulnerable to sandwich attacks. `LPVault` utilizes the **AlphaFair invariant pricing model**:
+Naive vaults evaluate total assets by multiplying LP tokens by the spot price of pool reserves, making them vulnerable to sandwich attacks. `LPVault` utilizes the **fair-reserve invariant pricing model**:
 
 $$\text{totalAssets} = 2 \times \sqrt{r_0 \times r_1 \times P_{\text{TWAP}}} \times \frac{\text{vaultLP}}{\text{totalLPSupply}} + \text{idleAsset}$$
 
@@ -184,9 +183,7 @@ sequenceDiagram
     Note over UniPair,Arb: Uniswap sends tokens first, then invokes callback
     UniPair->>Arb: uniswapV2Call(sender, amount0, amount1, data)
     
-    rect rgb(240, 248, 255)
     Note over Arb: 1. Verify msg.sender == activePair<br/>2. Verify sender == address(this)<br/>3. Verify factory.getPair() == msg.sender
-    end
 
     Arb->>SushiRouter: swapExactTokensForTokens(borrowedToken -> repaymentToken)
     SushiRouter-->>Arb: return proceeds
@@ -230,17 +227,17 @@ The repository includes a dedicated test lab (`test/attacks/`) demonstrating fou
 
 ## Live Deployments (Base Sepolia - Chain ID: 84532)
 
-All Zapline contracts are deployed live on **Base Sepolia**:
+All Zapline contracts are deployed live and verified with 100% exact match source code and ABI on **BaseScan**:
 
-| Contract | Address | BaseScan (Verified Source & ABI) | Sourcify | Blockscout |
-| :--- | :--- | :---: | :---: | :---: |
-| **`SwapExecutor`** | `0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b` | [Verified on BaseScan](https://sepolia.basescan.org/address/0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b/) | [Blockscout](https://base-sepolia.blockscout.com/address/0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b) |
-| **`Zap`** | `0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19` | [Verified on BaseScan](https://sepolia.basescan.org/address/0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19/) | [Blockscout](https://base-sepolia.blockscout.com/address/0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19) |
-| **`TwapOracle`** | `0x83Ba06204136b0df38a2906673364600f0B0b7D0` | [Verified on BaseScan](https://sepolia.basescan.org/address/0x83Ba06204136b0df38a2906673364600f0B0b7D0#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0x83Ba06204136b0df38a2906673364600f0B0b7D0/) | [Blockscout](https://base-sepolia.blockscout.com/address/0x83Ba06204136b0df38a2906673364600f0B0b7D0) |
-| **`LPVault`** (USDC/WETH) | `0x89EC41722e401cE1dFBE459644f68a3d7180AcA6` | [Verified on BaseScan](https://sepolia.basescan.org/address/0x89EC41722e401cE1dFBE459644f68a3d7180AcA6#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0x89EC41722e401cE1dFBE459644f68a3d7180AcA6/) | [Blockscout](https://base-sepolia.blockscout.com/address/0x89EC41722e401cE1dFBE459644f68a3d7180AcA6) |
-| **`FlashSwap`** | `0x867741F11BC22dc9d898c1c8998B4D8721384536` | [Verified on BaseScan](https://sepolia.basescan.org/address/0x867741F11BC22dc9d898c1c8998B4D8721384536#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0x867741F11BC22dc9d898c1c8998B4D8721384536/) | [Blockscout](https://base-sepolia.blockscout.com/address/0x867741F11BC22dc9d898c1c8998B4D8721384536) |
-| **`UniswapV2Router02`** | `0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e` | [Verified on BaseScan](https://sepolia.basescan.org/address/0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e/) | [Blockscout](https://base-sepolia.blockscout.com/address/0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e) |
-| **`SushiRouter` (Venue B)** | `0x5540ac46a74D2C1c055428cc83E0f4C165b52aad` | [Verified on BaseScan](https://sepolia.basescan.org/address/0x5540ac46a74D2C1c055428cc83E0f4C165b52aad#code) | [Sourcify](https://repo.sourcify.dev/contracts/full_match/84532/0x5540ac46a74D2C1c055428cc83E0f4C165b52aad/) | [Blockscout](https://base-sepolia.blockscout.com/address/0x5540ac46a74D2C1c055428cc83E0f4C165b52aad) |
+| Contract | Deployed Address | BaseScan Explorer |
+| :--- | :--- | :---: |
+| **`SwapExecutor`** | `0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x3b9822F6a5a85b02A484946466E4c10AE8DdB46b#code) |
+| **`Zap`** | `0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19#code) |
+| **`TwapOracle`** | `0x83Ba06204136b0df38a2906673364600f0B0b7D0` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x83Ba06204136b0df38a2906673364600f0B0b7D0#code) |
+| **`LPVault`** (USDC/WETH) | `0x89EC41722e401cE1dFBE459644f68a3d7180AcA6` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x89EC41722e401cE1dFBE459644f68a3d7180AcA6#code) |
+| **`FlashSwap`** | `0x867741F11BC22dc9d898c1c8998B4D8721384536` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x867741F11BC22dc9d898c1c8998B4D8721384536#code) |
+| **`UniswapV2Router02`** | `0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e#code) |
+| **`SushiRouter` (Venue B)** | `0x5540ac46a74D2C1c055428cc83E0f4C165b52aad` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x5540ac46a74D2C1c055428cc83E0f4C165b52aad#code) |
 
 ---
 
