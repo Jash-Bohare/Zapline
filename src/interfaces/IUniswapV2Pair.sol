@@ -18,6 +18,10 @@ interface IUniswapV2Pair {
 
     function sync() external;
 
+    function mint(address to) external returns (uint256 liquidity);
+
+    function burn(address to) external returns (uint256 amount0, uint256 amount1);
+
     function skim(address to) external;
 
     function balanceOf(address account) external view returns (uint256);
