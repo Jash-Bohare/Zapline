@@ -235,7 +235,7 @@ All Zapline contracts are deployed live and verified with 100% exact match sourc
 | **`Zap`** | `0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0xe0C3452F0eECaBD975Bc770dF83b1bDeFf6bfC19#code) |
 | **`TwapOracle`** | `0x83Ba06204136b0df38a2906673364600f0B0b7D0` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x83Ba06204136b0df38a2906673364600f0B0b7D0#code) |
 | **`LPVault`** (USDC/WETH) | `0x89EC41722e401cE1dFBE459644f68a3d7180AcA6` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x89EC41722e401cE1dFBE459644f68a3d7180AcA6#code) |
-| **`FlashSwap`** | `0x867741F11BC22dc9d898c1c8998B4D8721384536` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x867741F11BC22dc9d898c1c8998B4D8721384536#code) |
+| **`FlashSwap`** | `0x68164b8e3342f8968251283c44C43786075E11B2` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x68164b8e3342f8968251283c44C43786075E11B2#code) |
 | **`UniswapV2Router02`** | `0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0xdEb6081F07acbcB5120E2D0a4225A0e30A19543e#code) |
 | **`SushiRouter` (Venue B)** | `0x5540ac46a74D2C1c055428cc83E0f4C165b52aad` | [Verified Contract on BaseScan](https://sepolia.basescan.org/address/0x5540ac46a74D2C1c055428cc83E0f4C165b52aad#code) |
 
