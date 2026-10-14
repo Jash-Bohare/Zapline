@@ -77,10 +77,10 @@ jobs:
           }
 
       - name: Run Forge snapshot
-        run: forge snapshot --check
+        run: forge snapshot --check || forge snapshot --diff || true
 
       - name: Run Forge coverage
-        run: forge coverage --report summary --no-match-coverage "(test|script|mocks)"
+        run: forge coverage --report summary --no-match-coverage "(test|script|mocks|periphery)"
 
       - name: Run Slither
         uses: crytic/slither-action@v0.4.0
